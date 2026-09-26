@@ -63,16 +63,20 @@
 │   │   ├── SKILL.md          Skill 本体（Prompt / 规则 / 引用）
 │   │   ├── changelog.md      本版设计思路与变更理由
 │   │   └── references/       按需加载的细节：骨架 / 文风 / 输入模板
-│   └── v2 … v7/                                                 [待建]
+│   ├── v2/
+│   │   ├── SKILL.md          新增阶段 1.5「定精度」、铁律 6
+│   │   ├── changelog.md
+│   │   └── references/       多了 precision.md（精度标准）
+│   └── v3 … v7/                                                 [待建]
 ├── output/                   各版 Skill 实际生成的作业
 │   ├── v1/
 │   │   ├── generated.md      AI 原始生成（未审阅）
 │   │   ├── generated.pdf     导出产物（不入库，见 .gitignore）
-│   │   └── human-edited.md   人工审阅修改后的最终版 —— 这才是提交物  [待写]
+│   │   └── human-edited.md   人工审阅修改后的最终版 —— 这才是提交物
 │   └── v2 … v7/                                                 [待建]
 ├── feedback/                 每轮给 AI 的反馈记录
-│   ├── v1-to-v2.md                                             [待写]
-│   └── …
+│   ├── v1-to-v2.md           来自 v1 产物的 7 处人工批注
+│   └── v2-to-v3.md                                             [待写]
 ├── input/                    每周提供给 Skill 的原始输入（周次、章节、真实经历）
 │   └── week03.md
 ├── report/
@@ -159,7 +163,20 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\huma
 | 标签 | 含义 |
 | --- | --- |
 | `phase1-handmade` | 手工版作业完成 |
-| `skill-v1` … `skill-v7` | 第 1 至第 7 版 Skill 定稿 |
+| `skill-v1` … `skill-v7` | 第 N 版 Skill **定稿**（只有 SKILL.md，不含产物） |
+| `skill-v1-final` … | 某版 Skill 的**完整交付物**（含报告与工具修复） |
 | `final-report` | 总结报告完成 |
 
+> 为什么每版有两个标签：`skill-vN` 打在 Skill 定稿那次提交上，
+> 但那时报告还没产出、工具脚本还可能有 bug——老师按该标签看不到实际交付状态。
+> `skill-vN-final` 指向该版真正可以交付的提交。
+
 提交信息格式统一为 `[phase] 简短描述`，正文说明「修改了 Skill 的哪一部分、为什么改」。
+
+**写提交信息的两个坑**（都踩过）：
+
+- 正文里不要出现英文双引号。PowerShell 传给原生程序时会截断参数，
+  导致 `git commit` 把正文里的 `-V`、`--metadata` 之类当成 git 自己的选项而报错。
+- 不要用反引号（PowerShell 的转义符），会破坏参数边界。
+
+长正文用单引号 here-string（`@'...'@`）最稳。
