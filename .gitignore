@@ -1,7 +1,12 @@
-# 由 Markdown 生成的产物，可随时重新导出，不入库
+# 由 Markdown 生成的中间产物，可随时重新导出，不入库
 *.docx
-*.pdf
 *.html
+
+# 导出的 PDF 默认不入库——output/ 下的只是中间产物
+*.pdf
+
+# 但 submit/ 下的是真正要上传给老师的提交件，必须入库留痕
+!submit/*.pdf
 
 # 工具运行时的临时文件
 tools/.cache/
