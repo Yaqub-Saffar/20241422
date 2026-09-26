@@ -67,9 +67,8 @@
 ├── output/                   各版 Skill 实际生成的作业
 │   ├── v1/
 │   │   ├── generated.md      AI 原始生成（未审阅）
-│   │   ├── generated.docx    导出产物
-│   │   ├── generated.pdf     导出产物（提交用）
-│   │   └── human-edited.md   人工审阅修改后的最终版              [待写]
+│   │   ├── generated.pdf     导出产物（不入库，见 .gitignore）
+│   │   └── human-edited.md   人工审阅修改后的最终版 —— 这才是提交物  [待写]
 │   └── v2 … v7/                                                 [待建]
 ├── feedback/                 每轮给 AI 的反馈记录
 │   ├── v1-to-v2.md                                             [待写]
@@ -102,7 +101,7 @@
 | opencode | ≥ 1.18 | 运行 Skill 的智能体 | `opencode --version` |
 | Node.js + npm | ≥ 18 | 运行 mermaid-cli | `node -v` |
 | @mermaid-js/mermaid-cli | 12.x | Mermaid 思维导图 → PNG | `mmdc --version` |
-| Pandoc | ≥ 3.x | Markdown → DOCX | `pandoc --version` |
+| Pandoc | ≥ 3.x | Markdown → HTML（再由 Edge 打印 PDF） | `pandoc --version` |
 | Git | ≥ 2.5 | 版本记录 | `git --version` |
 
 ### 3.2 使用 Skill 生成周报
@@ -131,18 +130,27 @@
 powershell -ExecutionPolicy Bypass -File tools\use-version.ps1 -Version 3
 ```
 
-### 3.4 导出报告（Markdown → 图片 + DOCX）
+### 3.4 导出报告（Markdown → 思维导图 PNG + PDF）
 
 ```powershell
-# 渲染思维导图并导出 docx / pdf
+# 渲染思维导图并导出 pdf
 powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md
 ```
 
-脚本会完成三件事：
+脚本会完成两件事：
 
 1. 抽出 Markdown 中的 ```mermaid 代码块，逐个渲染为 `assets/*.png` 并回填图片引用
-2. 调用 Pandoc 导出 DOCX
-3. 调用 Pandoc 导出 HTML，再用本机 Edge 无头模式打印为 PDF
+2. 调用 Pandoc 导出单文件 HTML（CSS 内嵌），再用本机 Edge 无头模式打印为 PDF
+
+> **DOCX 默认不生成。** 老师只收 Markdown 与 PDF，多一种格式只是多一份可能在提交前
+> 忘更新的副本。确实需要时加 `-Docx`：
+>
+> ```powershell
+> powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md -Docx
+> ```
+>
+> `*.docx` 与 `*.pdf` 都已在 `.gitignore` 中——它们是可重新导出的产物，
+> 仓库只提交 Markdown 源文件与思维导图 PNG。
 
 ---
 

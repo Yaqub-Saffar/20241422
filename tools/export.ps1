@@ -2,21 +2,25 @@
 .SYNOPSIS
     把周报 Markdown 导出为 DOCX 与 PDF，并渲染其中的 Mermaid 思维导图为 PNG。
 
-.DESCRIPTION
+    .DESCRIPTION
     三步：
       1. 抽出 Markdown 中的 ```mermaid 代码块，用 mermaid-cli 渲染成 assets\*.png，
          并在原代码块前插入图片引用（老师要求「Mermaid 代码与截图」两者都要）。
-      2. 用 Pandoc 导出 DOCX。
-      3. 用 Pandoc 导出单文件 HTML（CSS 内嵌），再用本机 Edge 无头模式打印为 PDF。
+      2. 用 Pandoc 导出 PDF（经由单文件 HTML + 本机 Edge 无头模式）。
+      3. DOCX 默认**不生成**：老师只收 Markdown 与 PDF，多一种格式只是多一份
+         可能在提交前忘更新的副本。需要时显式加 -Docx。
 
-.EXAMPLE
+    .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md
+
+    .EXAMPLE
+    powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md -Docx
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Report,
     [string]$OutDir,
-    [switch]$SkipDocx,
+    [switch]$Docx,
     [switch]$SkipPdf
 )
 
@@ -122,10 +126,12 @@ $sourcePath = if ($matches.Count -gt 0 -and $mmdc) { $patchedPath } else { $repo
 
 # ---------------------------------------------------------------- 2. DOCX
 # pandoc 在 --standalone 下会从文件名推断标题，并在正文最上方插入一个 Title 样式的
-# 标题块（PDF 里表现为顶端多出一行 "human-edited"）。报告 Markdown 本身已有
+# 标题块（PDF 里表现为顶端多出一行 human-edited）。报告 Markdown 本身已有
 # `# 密码系统设计`，再插一层是重复内容，所以显式把 title 置空抑制掉。
 $docxPath = Join-Path $OutDir "$stem.docx"
-if (-not $SkipDocx) {
+if (-not $Docx) {
+    Write-Step '跳过 DOCX（默认不生成，需要时加 -Docx）'
+} else {
     if (-not $pandoc) {
         Write-Warn2 '未找到 pandoc，跳过 DOCX（winget install --id JohnMacFarlane.Pandoc -e）'
     } else {

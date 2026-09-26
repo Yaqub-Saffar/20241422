@@ -79,7 +79,7 @@ metadata:
 powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\generated.md
 ```
 
-产出 `output/vN/generated.docx` 与 `output/vN/generated.pdf`，思维导图 PNG 落在 `assets/`。
+产出 `output/vN/generated.pdf`，思维导图 PNG 落在 `assets/`。DOCX 默认不生成。
 
 导出后**必须提醒用户**：草稿不能直接交，需要人工逐句审阅，另存为 `output/vN/human-edited.md`，并在每处改动旁用 `[[修改原因]]` 标注。这些批注是评分的硬性证据。
 
