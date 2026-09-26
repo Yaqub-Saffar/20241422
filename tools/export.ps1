@@ -101,7 +101,10 @@ if ($matches.Count -eq 0) {
         }
 
         if (Test-Path -LiteralPath $png) {
-            $figure = "`r`n![$name]($relPrefix$name.png)`r`n"
+            # alt 文字不要用 $name（含文件名，Word 会把它当图注渲染出来，
+            # 成品里就会露出 "human-edited-mermaid-1" 这种内部命名）
+            $alt = if ($matches.Count -gt 1) { "学习思维导图 $($i + 1)" } else { '学习思维导图' }
+            $figure = "`r`n![$alt]($relPrefix$name.png)`r`n"
             $text = $text.Substring(0, $m.Index) + $figure + $text.Substring($m.Index)
             Write-Ok "渲染完成: assets\$name.png"
         } else {
@@ -118,13 +121,17 @@ if ($matches.Count -eq 0) {
 $sourcePath = if ($matches.Count -gt 0 -and $mmdc) { $patchedPath } else { $reportPath }
 
 # ---------------------------------------------------------------- 2. DOCX
+# pandoc 在 --standalone 下会从文件名推断标题，并在正文最上方插入一个 Title 样式的
+# 标题块（PDF 里表现为顶端多出一行 "human-edited"）。报告 Markdown 本身已有
+# `# 密码系统设计`，再插一层是重复内容，所以显式把 title 置空抑制掉。
 $docxPath = Join-Path $OutDir "$stem.docx"
 if (-not $SkipDocx) {
     if (-not $pandoc) {
         Write-Warn2 '未找到 pandoc，跳过 DOCX（winget install --id JohnMacFarlane.Pandoc -e）'
     } else {
         Write-Step '导出 DOCX ...'
-        & $pandoc --from=markdown --to=docx --standalone --resource-path="$reportDir;$repoRoot" -o $docxPath $sourcePath
+        & $pandoc --from=markdown --to=docx --standalone --resource-path="$reportDir;$repoRoot" `
+                  --metadata title="" -o $docxPath $sourcePath
         if ($LASTEXITCODE -eq 0) { Write-Ok "DOCX: $docxPath" } else { Write-Warn2 'DOCX 导出失败' }
     }
 }
@@ -139,9 +146,12 @@ if (-not $SkipPdf) {
         Write-Step '导出 PDF ...'
         $htmlPath = Join-Path $env:TEMP "$stem.html"
         $cssPath  = Join-Path $PSScriptRoot 'report.css'
+
+        # title 置空：抑制 pandoc 推断出的标题块（详见上方 2. DOCX 处的说明）
         & $pandoc --from=markdown --to=html5 --standalone --embed-resources `
                   --resource-path="$reportDir;$repoRoot" `
-                  --css="$cssPath" --metadata title="$stem" -o $htmlPath $sourcePath
+                  --css="$cssPath" --metadata title="" `
+                  -o $htmlPath $sourcePath
 
         if ($LASTEXITCODE -eq 0) {
             $pdfPath = Join-Path $OutDir "$stem.pdf"
