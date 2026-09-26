@@ -25,11 +25,28 @@
 
 ### AI 使用声明
 
-- `handmade/` 下所有内容：本人手工完成，未使用 AI 辅助。
-- `skill/`、`output/generated.md`：由 AI 依据本人提供的学习内容与真实实践记录生成。
-- `output/human-edited.md`：本人逐句审阅修改，修改处用 `[[ ]]` 标注修改原因。
-- `feedback/`：本人书写的改进意见，AI 负责落实。
-- 本文与 `handmade/reflection.md`：本人撰写，AI 仅提问引导，不代写。
+**本人手写、AI 未参与：**
+
+- `handmade/homework1.md`：第二周预习报告全文，本人手工完成并已提交老师，未使用 AI 辅助。
+- `handmade/reflection.md`：本人手写。
+- `feedback/vN-to-vN+1.md`：本人书写的改进意见。
+- 报告中的「对 AI 总结的反思与补充」一节：**观点由本人口述/勾选，AI 仅负责成文**。
+- 报告中的「实践问题与解决」一节：事实由本人提供，AI 未编造任何报错、步骤或环境。
+
+**由 AI 生成或编写：**
+
+- `skill/v1..v7/`：Skill 规约，由 AI 依据 `handmade/homework1.md` 的写作习惯反推编写。
+- `output/v*/generated.md`：AI 生成的原始草稿。
+- `tools/`：全部脚本由 AI 编写与调试。
+- `input/v*.md` 中的「已核查的技术事实」小节：AI 联网核查的结果。
+- **本文（README.md）：由 AI 编写**，仅结构与事实部分经本人确认。
+
+**已知局限（主动说明）：**
+
+- AI 无法读取微信读书 / ituring 的付费正文，因此 `output/v*/generated.md` 中
+  「AI 对学习内容的总结」一节是根据本人提供的章节提要 + 公开资料（官方文档、目录等）
+  写成的，**不保证与教材原文逐句一致**。本人已对照教材核对并修改。
+- 「我的补充」与「经验总结」中的第一人称判断，均来自本人真实阅读与实践，不代写。
 
 ---
 
@@ -40,29 +57,34 @@
 ├── README.md                 项目说明（本文件），含运行方式
 ├── handmade/                 Phase 1：纯手工作业
 │   ├── homework1.md          第二周预习报告（手工版）
-│   └── reflection.md         手写时的卡壳点与对 AI 的期望
+│   └── reflection.md         手写时的卡壳点与对 AI 的期望        [待写]
 ├── skill/                    Skill 进化史，每版一个目录
 │   ├── v1/
 │   │   ├── SKILL.md          Skill 本体（Prompt / 规则 / 引用）
-│   │   └── changelog.md      本版设计思路与变更理由
-│   └── v2 … v7/
+│   │   ├── changelog.md      本版设计思路与变更理由
+│   │   └── references/       按需加载的细节：骨架 / 文风 / 输入模板
+│   └── v2 … v7/                                                 [待建]
 ├── output/                   各版 Skill 实际生成的作业
 │   ├── v1/
 │   │   ├── generated.md      AI 原始生成（未审阅）
-│   │   └── human-edited.md   人工审阅修改后的最终版
-│   └── v2 … v7/
+│   │   ├── generated.docx    导出产物
+│   │   ├── generated.pdf     导出产物（提交用）
+│   │   └── human-edited.md   人工审阅修改后的最终版              [待写]
+│   └── v2 … v7/                                                 [待建]
 ├── feedback/                 每轮给 AI 的反馈记录
-│   ├── v1-to-v2.md
+│   ├── v1-to-v2.md                                             [待写]
 │   └── …
 ├── input/                    每周提供给 Skill 的原始输入（周次、章节、真实经历）
 │   └── week03.md
 ├── report/
-│   └── final-analysis.md     Phase 10 总结报告
+│   └── final-analysis.md     Phase 10 总结报告                    [待写]
 ├── assets/                   思维导图 PNG 等图片资源
 ├── tools/                    辅助脚本（导出、渲染、版本切换）
 └── .opencode/skills/preview-report/SKILL.md   Skill 工作副本（供 opencode 加载）
 ```
 
+> 标 `[待写]` / `[待建]` 的文件尚未创建，其余均已入库。
+>
 > `skill/vN/SKILL.md` 是 Skill 的**唯一真源**；`.opencode/skills/preview-report/SKILL.md`
 > 只是当前迭代版本的运行副本，用 `tools\use-version.ps1` 从真源同步，二者不应分别编辑。
 >
