@@ -54,15 +54,20 @@
 ├── feedback/                 每轮给 AI 的反馈记录
 │   ├── v1-to-v2.md
 │   └── …
+├── input/                    每周提供给 Skill 的原始输入（周次、章节、真实经历）
+│   └── week03.md
 ├── report/
 │   └── final-analysis.md     Phase 10 总结报告
 ├── assets/                   思维导图 PNG 等图片资源
-├── tools/                    辅助脚本（导出、渲染、校验）
+├── tools/                    辅助脚本（导出、渲染、版本切换）
 └── .opencode/skills/preview-report/SKILL.md   Skill 工作副本（供 opencode 加载）
 ```
 
 > `skill/vN/SKILL.md` 是 Skill 的**唯一真源**；`.opencode/skills/preview-report/SKILL.md`
 > 只是当前迭代版本的运行副本，用 `tools\use-version.ps1` 从真源同步，二者不应分别编辑。
+>
+> `input/` 与 `tools/`、`assets/`、`.opencode/` 是在老师要求的目录之外补充的：
+> `input/` 用于留痕"这一轮我到底给了 AI 什么"，让迭代过程可核查。
 
 ---
 

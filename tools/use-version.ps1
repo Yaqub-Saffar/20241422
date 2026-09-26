@@ -29,7 +29,7 @@ if (-not (Test-Path -LiteralPath $source)) {
 New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
 Copy-Item -LiteralPath $source -Destination $target -Force
 
-$versionLine = (Get-Content -LiteralPath $source -TotalCount 8 -Encoding UTF8 |
-                Where-Object { $_ -match '^version:' }) -join ''
+$versionLine = (Get-Content -LiteralPath $source -TotalCount 12 -Encoding UTF8 |
+                Where-Object { $_ -match '^\s*version:' }) -join ''
 Write-Host "[use-version] 已同步 skill\v$Version\SKILL.md -> .opencode\skills\preview-report\SKILL.md  $versionLine" -ForegroundColor Green
 Write-Host '[use-version] 请重启 opencode 使新 Skill 生效' -ForegroundColor Yellow
