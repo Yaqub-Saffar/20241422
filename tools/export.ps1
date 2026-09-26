@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     把周报 Markdown 导出为 DOCX 与 PDF，并渲染其中的 Mermaid 思维导图为 PNG。
 
@@ -20,10 +20,14 @@ param(
     [switch]$SkipPdf
 )
 
-$ErrorActionPreference = 'Stop'
+# 本脚本会调用 mmdc / pandoc / msedge 三个原生程序，它们都会往 stderr 写无关噪声
+# （Git 的 "Ignore caches that are heterogeneous"、Edge 的 QQBrowser 导入告警等）。
+# PowerShell 5.1 会把原生 stderr 提升为 ErrorRecord，配合 Stop 会导致脚本中断，
+# 因此这里用 Continue，真正的失败一律显式 throw。
+$ErrorActionPreference = 'Continue'
 
 $repoRoot    = Split-Path -Parent $PSScriptRoot
-$reportPath  = (Resolve-Path -LiteralPath $Report).Path
+$reportPath = (Resolve-Path -LiteralPath $Report -ErrorAction Stop).Path
 $reportDir   = Split-Path -Parent $reportPath
 $stem        = [System.IO.Path]::GetFileNameWithoutExtension($reportPath)
 if (-not $OutDir) { $OutDir = $reportDir }
@@ -73,36 +77,35 @@ if ($matches.Count -eq 0) {
 } else {
     Write-Step "发现 $($matches.Count) 个 mermaid 块，开始渲染"
     $puppeteerCfg = Join-Path $PSScriptRoot 'puppeteer-config.json'
-    $builder = New-Object System.Text.StringBuilder
-    [void]$builder.Append($text)
 
-    $index = 0
-    foreach ($m in $matches) {
-        $index++
-        $name = "$stem-mermaid-$index"
+    # 报告所在目录到 assets 的相对路径（用 MakeRelativeUri，避免中文路径与跨盘符出错）
+    $assetsUri = New-Object System.Uri(($assetsDir.TrimEnd('\') + '\'))
+    $reportUri = New-Object System.Uri(($reportDir.TrimEnd('\') + '\'))
+    $relPrefix = $reportUri.MakeRelativeUri($assetsUri).ToString()
+    if (-not $relPrefix.EndsWith('/')) { $relPrefix += '/' }
+
+    # 从后往前替换，避免相同代码块被重复插入图片
+    for ($i = $matches.Count - 1; $i -ge 0; $i--) {
+        $m = $matches[$i]
+        $name = "$stem-mermaid-$($i + 1)"
         $png  = Join-Path $assetsDir "$name.png"
         $mmd  = Join-Path $env:TEMP "$name.mmd"
 
         [System.IO.File]::WriteAllText($mmd, $m.Groups[1].Value, (New-Object System.Text.UTF8Encoding($false)))
 
-        $args = @('-i', $mmd, '-o', $png, '-b', 'white', '-w', '1600', '-s', '2')
-        & $mmdc @args 2>&1 | Out-Null
+        $mmdcArgs = @('-i', $mmd, '-o', $png, '-b', 'white', '--size', '1600', '-s', '2')
+        & $mmdc @mmdcArgs 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0 -and (Test-Path -LiteralPath $puppeteerCfg)) {
-            Write-Warn2 "mmdc 直接调用失败，改用本机 Edge 重试（第 $index 个）"
-            & $mmdc @('-p', $puppeteerCfg) @args 2>&1 | Out-Null
+            Write-Warn2 "mmdc 直接调用失败，改用本机 Edge 重试（第 $($i + 1) 个）"
+            & $mmdc @('-p', $puppeteerCfg) @mmdcArgs 2>$null | Out-Null
         }
 
         if (Test-Path -LiteralPath $png) {
-            $rel = '..\..\assets\' + "$name.png"
-            if ($reportDir.TrimEnd('\') -eq $OutDir.TrimEnd('\')) { $rel = '..\assets\' + "$name.png" }
-            $figure = "`r`n![$name]($rel)`r`n"
-            # 在该 mermaid 代码块前插入图片引用
-            $needle = $m.Value
-            $patched = $text.Replace($needle, $figure + $needle)
-            $text = $patched
+            $figure = "`r`n![$name]($relPrefix$name.png)`r`n"
+            $text = $text.Substring(0, $m.Index) + $figure + $text.Substring($m.Index)
             Write-Ok "渲染完成: assets\$name.png"
         } else {
-            Write-Warn2 "第 $index 个 mermaid 块渲染失败，保留代码块"
+            Write-Warn2 "第 $($i + 1) 个 mermaid 块渲染失败，保留代码块"
         }
         Remove-Item -LiteralPath $mmd -Force -ErrorAction SilentlyContinue
     }
@@ -143,14 +146,17 @@ if (-not $SkipPdf) {
         if ($LASTEXITCODE -eq 0) {
             $pdfPath = Join-Path $OutDir "$stem.pdf"
             $htmlUri = (New-Object System.Uri($htmlPath)).AbsoluteUri
-            $pdfUri  = (New-Object System.Uri($pdfPath)).AbsoluteUri
+            # 注意：Edge 的 --print-to-pdf 只接受原始文件系统路径，
+            # 传 file:// URI 会静默失败（exit=0 但不产出文件）。输入侧才用 URI。
+            $profileDir = Join-Path $env:TEMP "opencode-edge-profile"
             $edgeArgs = @('--headless=new', '--disable-gpu', '--no-pdf-header-footer',
-                          "--print-to-pdf=$pdfUri", $htmlUri)
+                          "--user-data-dir=$profileDir",
+                          "--print-to-pdf=$pdfPath", $htmlUri)
             $proc = Start-Process -FilePath $edge -ArgumentList $edgeArgs -NoNewWindow -PassThru -Wait
-            if ((Test-Path -LiteralPath $pdfPath) -and $proc.ExitCode -eq 0) {
+            if (Test-Path -LiteralPath $pdfPath) {
                 Write-Ok "PDF: $pdfPath"
             } else {
-                Write-Warn2 'Edge 打印 PDF 失败，可手动用 WPS 打开 DOCX 导出'
+                Write-Warn2 "Edge 打印 PDF 失败（exit=$($proc.ExitCode)），可手动用 WPS 打开 DOCX 导出"
             }
             Remove-Item -LiteralPath $htmlPath -Force -ErrorAction SilentlyContinue
         } else {

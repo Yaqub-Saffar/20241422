@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     把 skill\vN\SKILL.md 同步为 opencode 的当前运行版本。
 
