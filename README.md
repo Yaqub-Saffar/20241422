@@ -6,6 +6,7 @@
 - **作业要求**：`AI_Skill_迭代开发`（选做，20 分）
 - **迭代周期**：7 轮（v1 → v7），每轮产出一份真实周报作为测试样本
 - **状态**：✅ 七轮全部完成，终版分析报告已产出（2026-10-17）；另用定稿 v7 **直接生成第 8~12 周预习报告**（2026-10-17）
+- **Git 仓库（公开）**：https://github.com/Yaqub-Saffar/20241422
 
 ---
 
@@ -17,7 +18,7 @@
 | Phase 1 | 手工完成第 1 次预习作业（禁用 AI） | 3 | `handmade/` | `phase1-handmade` |
 | Phase 2 | 编写初始 Skill | 3 | `skill/v1/` | `skill-v1` |
 | Phase 3-9 | 7 次迭代：生成 → 人工审阅 → 反馈改进 | 10 | `skill/v2..v7/`、`output/v1..v7/`、`feedback/` | `skill-v2` … `skill-v7` |
-| Phase 10 | 总结报告 | 3 | `report/final-analysis.md` | `final-report` |
+| Phase 10 | 总结报告 | 3 | `report/20241422穆弈涵 skill迭代.md` | `final-report` |
 
 > **关于 Phase 1 的说明**
 > 作业模板中 `handmade/homework1.md` 指「第一次由本人手工完成并提交给老师的预习作业」。
@@ -54,7 +55,7 @@
 | v5 | `tools/check-report.ps1`（机检 8 项）+ 铁律 10 | 引入自我检查 / 验证机制 |
 | v6 | `report.config.yml` + 长章节组织 + 铁律 11 | 处理边界情况或复杂章节 |
 | v7 | 版本号显式 + 配置校验 + 留出输入泛化实测 + 铁律 12 | 泛化能力或稳定性 |
-| 终版 | `report/final-analysis.md`：变化曲线 + 进化逻辑 + v1 对比 | 与 v1 对比 |
+| 终版 | `report/20241422穆弈涵 skill迭代.md`：变化曲线 + 进化逻辑 + v1 对比 | 与 v1 对比 |
 
 > 评分细则原件见 `../AI_Skill_迭代开发.md` 第五节。**注意：`skill/v2/changelog.md`
 > 末尾自列的「已知不足 → 计划版本」表与评分细则整体错位一格**，本仓库按评分细则执行。
@@ -140,7 +141,7 @@ v7 定稿后，用**同一版 v7 Skill**（不再改动）直接生成第 8~12 �
 ├── input/                    每周提供给 Skill 的原始输入（周次、章节、真实经历）
 │   └── week03.md … week12.md
 ├── report/
-│   └── final-analysis.md     Phase 10 总结报告
+│   └── 20241422穆弈涵 skill迭代.md   Phase 10 总结报告（终版分析）
 ├── submit/                   待上传的提交件（学号 姓名 课程名 周次，md + pdf）
 ├── assets/                   思维导图 PNG 等图片资源（可重新导出）
 ├── tools/                    辅助脚本（导出、版本切换、机检、版本号、打包）
@@ -256,7 +257,7 @@ powershell -ExecutionPolicy Bypass -File tools\package-submit.ps1 -Report output
 > `git push origin <tag名>`，否则老师点开 GitHub 的 tag 列表是空的。
 
 分支：`experiment/strict-config`（加分项）——把机检的 `-StrictConfig` 变体（配置警告升级为硬失败）
-放在独立分支上做对照实验，`report/final-analysis.md` 第四节记录了实验结论。
+放在独立分支上做对照实验，`report/20241422穆弈涵 skill迭代.md` 第四节记录了实验结论。
 
 提交信息格式统一为 `[phase] 简短描述`，正文说明「修改了 Skill 的哪一部分、为什么改」。
 
