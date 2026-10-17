@@ -45,7 +45,8 @@ param(
     [string]$SelfReview,
     [string]$Week = '',
     [string]$Config = '',
-    [switch]$Final
+    [switch]$Final,
+    [switch]$StrictConfig
 )
 
 $ErrorActionPreference = 'Stop'
@@ -267,6 +268,12 @@ foreach ($r in $results) {
 }
 Write-Host '------------------------------------------------------------'
 $verdict = "$pass / $($results.Count) 通过"
+# 实验分支：-StrictConfig 把配置警告升级为硬失败
+$strictFail = ($StrictConfig -and $cfgWarnings.Count -gt 0)
+if ($strictFail) {
+    Write-Host "  结论：$verdict  —— 配置有警告（-StrictConfig），不得导出" -ForegroundColor Red
+    exit 1
+}
 if ($pass -eq $results.Count) {
     Write-Host "  结论：$verdict  —— 可进入导出阶段" -ForegroundColor Green
     exit 0
