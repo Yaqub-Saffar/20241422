@@ -164,17 +164,25 @@ if (-not $SkipPdf) {
             $htmlUri = (New-Object System.Uri($htmlPath)).AbsoluteUri
             # 注意：Edge 的 --print-to-pdf 只接受原始文件系统路径，
             # 传 file:// URI 会静默失败（exit=0 但不产出文件）。输入侧才用 URI。
-            $profileDir = Join-Path $env:TEMP "opencode-edge-profile"
+            # 一次性唯一 profile 目录：避免复用本机正在运行的 Edge 实例。
+            $profileDir = Join-Path $env:TEMP ("opencode-edge-profile-" + [guid]::NewGuid().ToString('N'))
             $edgeArgs = @('--headless=new', '--disable-gpu', '--no-pdf-header-footer',
+                          '--no-first-run', '--no-default-browser-check',
                           "--user-data-dir=$profileDir",
                           "--print-to-pdf=$pdfPath", $htmlUri)
-            $proc = Start-Process -FilePath $edge -ArgumentList $edgeArgs -NoNewWindow -PassThru -Wait
+            # Start-Process 会把数组用空格拼成一条命令行再重新切分：含空格的路径
+            # （如报告文件名 20241422穆弈涵 skill迭代.pdf）会被切成两个参数，
+            # Edge 误判为多个目标而报 Multiple targets are not supported in headless mode。
+            # 故先给含空格的参数加引号，再作为单条字符串传入。
+            $edgeArgLine = ($edgeArgs | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '
+            $proc = Start-Process -FilePath $edge -ArgumentList $edgeArgLine -NoNewWindow -PassThru -Wait
             if (Test-Path -LiteralPath $pdfPath) {
                 Write-Ok "PDF: $pdfPath"
             } else {
                 Write-Warn2 "Edge 打印 PDF 失败（exit=$($proc.ExitCode)），可手动用 WPS 打开 DOCX 导出"
             }
             Remove-Item -LiteralPath $htmlPath -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue
         } else {
             Write-Warn2 'HTML 中间文件生成失败'
         }
