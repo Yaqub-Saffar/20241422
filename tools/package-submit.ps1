@@ -6,7 +6,7 @@
     老师平台要求文件名带学号、姓名、课程名与周次，所以从 human-edited.md
     复制出两份改名后的副本：
 
-      submit\20241422 穆弈涵 《密码系统设计》.md
+      submit\20241422 穆弈涵 《密码系统设计》第三周.md
       submit\20241422 穆弈涵 《密码系统设计》第三周.pdf
 
     两种格式都要（md 与 pdf），所以默认就产出两份。
@@ -65,9 +65,11 @@ $stem       = [System.IO.Path]::GetFileNameWithoutExtension($reportPath)
 $reportDir  = Split-Path -Parent $reportPath
 
 # 提交件名里的书名号用中文全角，与老师模板一致；Windows 文件名非法字符是 \ / : * ? " < > |
+# v7 后：MD 与 PDF 都带周次（20241422 穆弈涵 《密码系统设计》第五周.md / .pdf），
+# 否则多周打包时 MD 同名会互相覆盖。
 $baseName = "$StudentId $StudentName 《$Course》"
-$mdName   = "$baseName.md"
-$pdfName  = "$baseName`第${weekCn}周.pdf"
+$mdName   = "${baseName}第${weekCn}周.md"
+$pdfName  = "${baseName}第${weekCn}周.pdf"
 
 $submitDir = Join-Path $repoRoot 'submit'
 New-Item -ItemType Directory -Path $submitDir -Force | Out-Null
@@ -92,7 +94,7 @@ if ($Clean) {
 }
 
 # ---- 打包模式
-# 1) Markdown：文件名不带周次，与老师模板一致
+# 1) Markdown：带周次，避免多周互相覆盖
 $mdTarget = Join-Path $submitDir $mdName
 Copy-Item -LiteralPath $reportPath -Destination $mdTarget -Force
 Write-Host "[submit] Markdown: submit\$mdName" -ForegroundColor Green

@@ -5,6 +5,7 @@
 - **学号 / 姓名**：20241422 穆弈涵
 - **作业要求**：`AI_Skill_迭代开发`（选做，20 分）
 - **迭代周期**：7 轮（v1 → v7），每轮产出一份真实周报作为测试样本
+- **状态**：✅ 七轮全部完成，终版分析报告已产出（截至 2026-10-17）
 
 ---
 
@@ -23,54 +24,59 @@
 > 本仓库采用 **第二周预习报告** 作为 Phase 1 的手工版本（该次作业完全手写、无 AI 辅助，
 > 并已实际提交给老师）。第一周报告未纳入本项目。
 
-### 迭代进度（截至 2026-09-27）
+### 迭代进度（截至 2026-10-17，七轮全部完成）
 
 要求是 7 轮（v1 → v7），每轮闭环为
 **SKILL 定稿 → 实跑产出 → 人工审阅 → 反馈 → 改下一版**。
 
-| 轮次 | SKILL | 实跑产物 | 人工批注 | 反馈 | 标签 |
+| 轮次 | SKILL | 实跑产物（周次） | 人工批注 | 反馈 | 标签 |
 | --- | --- | --- | --- | --- | --- |
-| v1 | ✅ | ✅ | ✅ 7 处 | ✅ `v1-to-v2.md` | `skill-v1` `skill-v1-final` |
-| **v2** | ✅ | ✅ 7/7 检查点通过 | ❌ **待本人审阅** | ❌ **待本人写** | `skill-v2` `skill-v2-final` |
-| v3 | 仅 `references/standards.md` | — | — | — | — |
-| v4 – v7 | — | — | — | — | — |
+| v1 | ✅ | 第3周 | ✅ 7 处 | ✅ `v1-to-v2.md` | `skill-v1` `skill-v1-final` |
+| v2 | ✅ | 第3周（复跑） | ✅ 4 处 | ✅ `v2-to-v3.md` | `skill-v2` `skill-v2-final` |
+| v3 | ✅ | 第4周 | ✅ 5 处 | ✅ `v3-to-v4.md` | `skill-v3` `skill-v3-final` |
+| v4 | ✅ | 第5周 | ✅ 4 处 | ✅ `v4-to-v5.md` | `skill-v4` `skill-v4-final` |
+| v5 | ✅ | 第6周 | ✅ 4 处 | ✅ `v5-to-v6.md` | `skill-v5` `skill-v5-final` |
+| v6 | ✅ | 第7周 | ✅ 4 处 | ✅ `v6-to-v7.md` | `skill-v6` `skill-v6-final` |
+| v7 | ✅ | 第8周（泛化）+ 第3周（重跑基线） | ✅ 4 处 | ✅ `v7-to-final.md` | `skill-v7` `skill-v7-final` |
+| 终版 | — | — | — | — | `final-report` |
 
-> **v2 的 7 项检查点全部通过**：v1 需人工修改的 7 处（并列模式被打包、PKCS#7 只给标准名、
-> EVP 只写分工、IV 泄露范围笼统、对比对象悬空、漏「返回错误」、结论停在现象），
-> v2 一次生成即写对，无需人工改动。判定依据见 `feedback/v1-to-v2.md` 第五节。
->
-> **下一步不是写 v3**，而是先由本人审阅 `output/v2/generated.md`，
-> 产出 `output/v2/human-edited.md`（每处改动标 `[[修改原因]]`）与 `feedback/v2-to-v3.md`。
-> 跳过这两步，v3 就失去「依据真实反馈迭代」的依据。
+> **v7 的泛化验证**：v1~v6 用的是第 3~7 周输入，v7 改用**从未参与调参**的
+> `input/week08.md`（一周跨三份资料 + SM2/SM3/SM4 三个并列算法）走完整流程，
+> `check-report.ps1 -Week 8` 全 PASS，**全程不改脚本**；并重跑第 3 周作 v1↔v7 对比基线。
 
-### 各版本计划解决的问题
+### 各版本实际解决的问题（对应老师评分细则）
 
-来自 `skill/v2/changelog.md` 末尾的「已知不足」表：
-
-| 版本 | 要解决的不足 | 性质 |
+| 版本 | 本版解决什么 | 老师"重点考察" |
 | --- | --- | --- |
-| v3 | 无教材术语表，同一概念不同周用词可能不一致 | 内容一致性 |
-| v4 | 12 条自查全靠自觉，没有脚本化校验 | 自查自动化 |
-| v5 | 思维导图节点数与字数限制硬编码，复杂章节不够用 | 参数可配置 |
-| v6 | 版本号 N 靠推断 `output/` 目录，手动改动会错 | 显式声明 |
-| v7 | 无 v1 ↔ 终版的质量对比数据 | 收敛 + 量化对比 |
+| v2 | 阶段 1.5「定精度」+ 铁律 6（抽象名词落地） | 从手工经验抽象出有效 Skill |
+| v3 | 阶段 3.5「锚点机制」+ 铁律 7/8（越界 / 断言条件） | 反馈是否具体、可执行 |
+| v4 | `glossary.md` + 阶段 1.6「术语对齐」+ 铁律 9 | 处理教材特定概念 / 术语 |
+| v5 | `tools/check-report.ps1`（机检 8 项）+ 铁律 10 | 引入自我检查 / 验证机制 |
+| v6 | `report.config.yml` + 长章节组织 + 铁律 11 | 处理边界情况或复杂章节 |
+| v7 | 版本号显式 + 配置校验 + 留出输入泛化实测 + 铁律 12 | 泛化能力或稳定性 |
+| 终版 | `report/final-analysis.md`：变化曲线 + 进化逻辑 + v1 对比 | 与 v1 对比 |
+
+> 评分细则原件见 `../AI_Skill_迭代开发.md` 第五节。**注意：`skill/v2/changelog.md`
+> 末尾自列的「已知不足 → 计划版本」表与评分细则整体错位一格**，本仓库按评分细则执行。
 
 ### AI 使用声明
 
-**本人手写、AI 未参与：**
+**本人手写、AI 未参与（本人真实判断）：**
 
 - `handmade/homework1.md`：第二周预习报告全文，本人手工完成并已提交老师，未使用 AI 辅助。
 - `handmade/reflection.md`：本人手写。
-- `feedback/vN-to-vN+1.md`：本人书写的改进意见。
-- 报告中的「对 AI 总结的反思与补充」一节：**观点由本人口述/勾选，AI 仅负责成文**。
+- `feedback/vN-to-vM.md`：本人审阅产物后书写的改进意见。
+- `output/vN/human-edited.md` 中的 `[[修改原因]]` 批注：本人审阅后标注。
+- 报告中的「对 AI 总结的反思与补充」一节：**观点由本人选定 / 口述，AI 仅负责成文**。
 - 报告中的「实践问题与解决」一节：事实由本人提供，AI 未编造任何报错、步骤或环境。
 
 **由 AI 生成或编写：**
 
 - `skill/v1..v7/`：Skill 规约，由 AI 依据 `handmade/homework1.md` 的写作习惯反推编写。
 - `output/v*/generated.md`：AI 生成的原始草稿。
-- `tools/`：全部脚本由 AI 编写与调试。
-- `input/v*.md` 中的「已核查的技术事实」小节：AI 联网核查的结果。
+- `tools/`：全部脚本由 AI 编写与调试（`export.ps1`、`use-version.ps1`、
+  `package-submit.ps1`、`check-report.ps1`、`version.ps1`）。
+- `input/weekNN.md` 中的「已核查的技术事实」小节：AI 联网核查的结果。
 - **本文（README.md）：由 AI 编写**，仅结构与事实部分经本人确认。
 
 **已知局限（主动说明）：**
@@ -87,42 +93,37 @@
 ```
 预习作业-skill迭代/
 ├── README.md                 项目说明（本文件），含运行方式
+├── report.config.yml         机检阈值配置（v6 新增，可配导图节点字数/分支数/层数）
 ├── handmade/                 Phase 1：纯手工作业
 │   ├── homework1.md          第二周预习报告（手工版）
 │   └── reflection.md         手写时的卡壳点与对 AI 的期望
 ├── skill/                    Skill 进化史，每版一个目录
-│   ├── v1/
-│   │   ├── SKILL.md          Skill 本体（Prompt / 规则 / 引用）
+│   ├── v1/ … v7/
+│   │   ├── SKILL.md          Skill 本体（铁律 / 流程 / 引用）
 │   │   ├── changelog.md      本版设计思路与变更理由
-│   │   └── references/       按需加载的细节：骨架 / 文风 / 输入模板
-│   ├── v2/
-│   │   ├── SKILL.md          新增阶段 1.5 定精度、铁律 6
-│   │   ├── changelog.md
-│   │   └── references/       多了 precision.md（精度标准）
-│   └── v3 … v7/                                                 [待建]
+│   │   └── references/       按需加载细节：骨架 / 文风 / 精度 / 术语 / 自查 / 复杂章节 / 稳定性 …
+│   └── v7/references/        共 10 个：structure, style, precision, review-anchors,
+│                             glossary, standards, self-check, complex-chapter,
+│                             stability, weekly-input-template
 ├── output/                   各版 Skill 实际生成的作业
-│   ├── v1/
+│   ├── v1/ … v7/
 │   │   ├── generated.md      AI 原始生成（未审阅）
 │   │   ├── generated.pdf     导出产物（不入库，见 .gitignore）
+│   │   ├── self-review.md    锚点清单（v3 起）
 │   │   └── human-edited.md   人工审阅修改后的最终版 —— 这才是提交物
-│   ├── v2/
-│   │   ├── generated.md      AI 原始生成，7 项检查点一次通过
-│   │   └── human-edited.md   人工审阅修改后的最终版                      [待写]
-│   └── v3 … v7/                                                 [待建]
+│   └── v7/week03-rerun.md    v7 复跑第3周，作 v1↔v7 对比基线
 ├── feedback/                 每轮给 AI 的反馈记录
-│   ├── v1-to-v2.md           来自 v1 产物的 7 处人工批注
-│   └── v2-to-v3.md                                             [待写]
+│   └── v1-to-v2.md … v7-to-final.md
 ├── input/                    每周提供给 Skill 的原始输入（周次、章节、真实经历）
-│   └── week03.md
+│   └── week03.md … week08.md
 ├── report/
-│   └── final-analysis.md     Phase 10 总结报告                    [待写]
-├── assets/                   思维导图 PNG 等图片资源
-├── tools/                    辅助脚本（导出、渲染、版本切换）
+│   └── final-analysis.md     Phase 10 总结报告
+├── submit/                   待上传的提交件（学号 姓名 课程名 周次，md + pdf）
+├── assets/                   思维导图 PNG 等图片资源（可重新导出）
+├── tools/                    辅助脚本（导出、版本切换、机检、版本号、打包）
 └── .opencode/skills/preview-report/SKILL.md   Skill 工作副本（供 opencode 加载）
 ```
 
-> 标 `[待写]` / `[待建]` 的文件尚未创建，其余均已入库。
->
 > `skill/vN/SKILL.md` 是 Skill 的**唯一真源**；`.opencode/skills/preview-report/SKILL.md`
 > 只是当前迭代版本的运行副本，用 `tools\use-version.ps1` 从真源同步，二者不应分别编辑。
 >
@@ -149,31 +150,50 @@
 2. 直接说出触发语，例如：
 
    ```
-   写第三周预习报告
+   写第八周预习报告
    ```
 
    或显式调用：
 
    ```
-   @preview-report 写第三周预习报告
+   @preview-report 写第八周预习报告
    ```
 
-3. Skill 会按五阶段流程执行：收集输入 → 资料核查 → 起草 → 自查 → 导出
+3. Skill 会按流程执行：收集输入 → 事实核查 → **定精度（1.5）** → **术语对齐（1.6）** →
+   起草（含长章节组织）→ 自查（**3A 机检 / 3B 人检**）→ **标薄弱点（3.5）** → 导出
 4. 产出的草稿位于 `output/vN/generated.md`，**必须人工审阅后**另存为
    `output/vN/human-edited.md` 并标注修改原因
+
+5. 版本号由 `tools/version.ps1` 显式解析（命令行 `-Version` → 输入 front-matter → 推断）：
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools\version.ps1 -Input input\week08.md
+   ```
 
 ### 3.3 切换 Skill 版本
 
 ```powershell
 # 把 skill/vN 同步为当前运行版本
-powershell -ExecutionPolicy Bypass -File tools\use-version.ps1 -Version 3
+powershell -ExecutionPolicy Bypass -File tools\use-version.ps1 -Version 7
 ```
 
-### 3.4 导出报告（Markdown → 思维导图 PNG + PDF）
+### 3.4 机检（导出前的硬关卡）
 
 ```powershell
-# 渲染思维导图并导出 pdf
-powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md
+# 对草稿跑 9 项结构性检查；全部 PASS 才导出
+powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v7\generated.md -Week 8
+# 检查终稿：第 7 项改为断言"锚点已全部解除"
+powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v7\human-edited.md -Week 8 -Final
+```
+
+脚本读取 `report.config.yml` 里的阈值；配置写坏（非法值 / 未知键）会打印 `[配置警告]` 并回退默认。
+
+> `tools/*.ps1` 为 PowerShell 脚本，**PowerShell 5.1 要求 UTF-8 BOM**，否则中文会被当 GBK 解析报错。
+
+### 3.5 导出报告（Markdown → 思维导图 PNG + PDF）
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v7\human-edited.md
 ```
 
 脚本会完成两件事：
@@ -182,14 +202,17 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\huma
 2. 调用 Pandoc 导出单文件 HTML（CSS 内嵌），再用本机 Edge 无头模式打印为 PDF
 
 > **DOCX 默认不生成。** 老师只收 Markdown 与 PDF，多一种格式只是多一份可能在提交前
-> 忘更新的副本。确实需要时加 `-Docx`：
->
-> ```powershell
-> powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\human-edited.md -Docx
-> ```
->
-> `*.docx` 与 `*.pdf` 都已在 `.gitignore` 中——它们是可重新导出的产物，
-> 仓库只提交 Markdown 源文件与思维导图 PNG。
+> 忘更新的副本。确实需要时加 `-Docx`。`*.pdf` 与 `*.docx` 均在 `.gitignore` 中
+> （`submit/*.pdf` 例外，会被提交）。
+
+### 3.6 打包提交件
+
+```powershell
+# 生成 submit\20241422 穆弈涵 《密码系统设计》第八周.md / .pdf
+powershell -ExecutionPolicy Bypass -File tools\package-submit.ps1 -Report output\v7\human-edited.md -Week 8 -Desktop
+```
+
+`submit\` 里按周存放（**MD 与 PDF 都带周次**，避免多周互相覆盖）。
 
 ---
 
@@ -199,12 +222,18 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\v1\huma
 | --- | --- |
 | `phase1-handmade` | 手工版作业完成 |
 | `skill-v1` … `skill-v7` | 第 N 版 Skill **定稿**（只有 SKILL.md，不含产物） |
-| `skill-v1-final` … | 某版 Skill 的**完整交付物**（含报告与工具修复） |
+| `skill-v1-final` … `skill-v7-final` | 某版 Skill 的**完整交付物**（含报告与工具修复） |
 | `final-report` | 总结报告完成 |
 
 > 为什么每版有两个标签：`skill-vN` 打在 Skill 定稿那次提交上，
 > 但那时报告还没产出、工具脚本还可能有 bug——老师按该标签看不到实际交付状态。
 > `skill-vN-final` 指向该版真正可以交付的提交。
+>
+> **`git push` 不会自动推 tag**，每轮打完 `skill-vN` / `skill-vN-final` 需单独
+> `git push origin <tag名>`，否则老师点开 GitHub 的 tag 列表是空的。
+
+分支：`experiment/strict-config`（加分项）——把机检的 `-StrictConfig` 变体（配置警告升级为硬失败）
+放在独立分支上做对照实验，`report/final-analysis.md` 第四节记录了实验结论。
 
 提交信息格式统一为 `[phase] 简短描述`，正文说明「修改了 Skill 的哪一部分、为什么改」。
 
