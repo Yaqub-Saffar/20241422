@@ -2,9 +2,9 @@
 name: preview-report
 description: 生成《密码系统设计》课程的每周预习报告草稿（Markdown），输出学习内容、AI 对学习内容的总结、对 AI 总结的反思与补充、实践问题与解决、参考资料、Mermaid 学习思维导图。当用户说"写第N周预习报告""本周预习作业""密码系统设计预习报告"或要求依据学号命名的周报模板生成文档时使用。不用于课程无关的报告、论文、读书笔记与通用总结。
 metadata:
-  version: "5"
+  version: "6"
   derived-from: handmade/homework1.md
-  improved-from: skill/v4
+  improved-from: skill/v5
 ---
 
 # 密码系统设计 · 预习报告生成
@@ -28,8 +28,10 @@ metadata:
    - v2 反例：「要求 `inl` 是块大小的整数倍」——抹掉了"仅对某类接口"这个前提。
 9. **术语全课程统一**（v4 新增）。同一个概念在全课程用同一个写法；术语**首次出现给中英对照**，缩写在首次出现时给全称。以 `references/glossary.md` 为准，词表里没有的新词当场补录。涉及法律法规与标准名称时以 `references/standards.md` 为准。
    - v3 反例：`OAEP` 首次出现只写了缩写，没给全称；`provider` 没给中英对照。
-10. **导出前必过机检**（v5 新增）。草稿完成后**必须**跑 `tools/check-report.ps1`，**8 项全 PASS 才能进阶段 4 导出**；有 FAIL 先修，不许带 FAIL 交付。机检判不了的部分（语义）见阶段 3 人检项。
+10. **导出前必过机检**（v5 新增）。草稿完成后**必须**跑 `tools/check-report.ps1`，**全部 PASS 才能进阶段 4 导出**；有 FAIL 先修，不许带 FAIL 交付。机检判不了的部分（语义）见阶段 3 人检项。
     - v4 反例：14 条自查全靠记性，锚点数与 `self-review.md` 行数是否一致、导图节点是否超长，都要人肉核对。
+11. **复杂章节先分流再写**（v6 新增）。命中「复杂章节」条件（一本书 ≥3 个重点小节 / 一周跨两本书 / 某节并列概念 ≥4 个）时，**必须**按 `references/complex-chapter.md` 组织：长章节总结按小节号分组、导图教材分支按"书名 章"分层。**导图超限时，调 `report.config.yml` 阈值或合并同类节点，并在 `self-review.md` 里报备**，不许悄悄摊平。
+    - v5 反例：第9章+第7章内容偏多时，导图「教材」分支一路摊平到 5 个二级节点，读者看不出两本书的分界。
 
 ## 六阶段流程
 
@@ -44,6 +46,8 @@ metadata:
 - 提交格式：默认为 `Markdown + PDF`
 
 确定本轮版本号 N：取 `output/` 下已存在的最大版本号 +1；若 `output/` 为空则 N = 1。
+
+读 `report.config.yml`（仓库根目录）：本周的导图节点字数/分支数/层数上限、总结是否按小节号分组，都以它为准；文件不存在就用内置默认。
 
 ### 阶段 1 · 事实核查
 
@@ -109,9 +113,21 @@ metadata:
   - 停在现象：「AI 智能体有明确的权限边界。」——正确但没有信息量。
   - 下到根因：「设备授权需要终端与网页交互，这是 AI 无法直接完成的环节，不是权限配置问题。」
 - **参考资料**：分「AI 工具 / 图书 / 网站」三个小节，如实列出**本轮实际用过**的 AI 工具。
-- **思维导图**：`mermaid mindmap` 代码块，根节点 `((密码系统设计第N周))`，固定三大分支 `教材` / `课件` / `实践`；教材分支先写「书名 第N章」再拆要点；每层 3-5 个节点，节点文案不超过 12 字。
+- **思维导图**：`mermaid mindmap` 代码块，根节点 `((密码系统设计第N周))`，固定三大分支 `教材` / `课件` / `实践`；
+  教材分支先写「书名 第N章」再拆要点；节点数量/字数/层数遵守 `report.config.yml` 的上限。
 
-文风细则见 `references/style.md`，精度标准见 `references/precision.md`，术语见 `references/glossary.md`。
+#### 长章节组织（v6 新增）
+
+写完草稿前先判断本周是否属于「复杂章节」（判据见 `references/complex-chapter.md`）：
+
+- **一本书 ≥3 个重点小节** → 「AI 总结」按**小节号分组**（每组一个 `**7.2 …：**` 式小标题）；
+- **一周跨两本书** → 导图「教材」分支**先按"书名 第N章"分层**，再列要点；
+- **某节并列概念 ≥4 个** → 逐个成句（铁律 6），必要时拆成子组；
+- **导图触顶**（节点字数/分支数/层数超 `report.config.yml` 上限）→ 先精简措辞，再合并同类到一层，
+  或调 `report.config.yml` 放宽；**任何合并/放宽都在 `self-review.md` 报备一行**。
+
+文风细则见 `references/style.md`，精度标准见 `references/precision.md`，术语见 `references/glossary.md`，
+复杂章节写法见 `references/complex-chapter.md`。
 
 输出到 `output/vN/generated.md`。
 
@@ -128,9 +144,10 @@ v5 起，自查拆成**机检**与**人检**两道，都要过。机检负责"�
 powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\vN\generated.md
 ```
 
-8 项全 PASS 才继续（脚本对 FAIL 项会定位到具体内容）。脚本覆盖：
-五章标题与顺序 / 无 `⚠️待核实` 残留 / 导图根节点格式 / 导图节点 ≤ 12 字 /
-无空话黑名单 / 缩写首现带中英对照 / 锚点数 == `self-review.md` 行数 / 必备标题存在。
+全部 PASS 才继续（脚本对 FAIL 项会定位到具体内容）。脚本覆盖 9 项：
+五章标题与顺序 / 无 `⚠️待核实` 残留 / 导图根节点格式 / 导图节点字数 /
+无空话黑名单 / 缩写首现带中英对照 / 锚点数 == `self-review.md` 行数 / 必备标题存在 /
+**导图分支数与层数**（后两项字数、分支数、层数的阈值**读 `report.config.yml`**，可用 `-Config` 指定）。
 
 > ⚠️ 脚本是 `.ps1`，**PowerShell 5.1 要求带 UTF-8 BOM**，否则中文会被当 GBK 解析报错。
 > 改动脚本后确认首三字节是 `EF BB BF`。
@@ -143,6 +160,7 @@ powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v
 - [ ] **（精度）** 逐条比对阶段 1.5 的清单：报告里每段都能对上清单里的某一问，没有清单外的自由发挥
 - [ ] **（自洽）** 同一概念在全文中的表述前后一致，无自相矛盾
 - [ ] **（术语）** 本周术语是否都按 `glossary.md` 的统一写法，且首次出现带了中英对照 / 缩写全称
+- [ ] **（结构）** 复杂章节是否按小节号分组、导图是否按"书名 章"分层、超限合并是否已报备（v6）
 - [ ] **（实践）** 「实践问题」每一条都能追溯到用户输入；解决过程保留了失败尝试
 - [ ] **（反思）** 「我的补充」是第一人称真实观点，不是 AI 总结的复述
 - [ ] **（深度）** 经验总结下到根本原因或能力边界，不是现象复述
@@ -160,7 +178,7 @@ powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v
 2. **在"中/低"处插入锚点**：紧贴可疑句写 HTML 注释
    `<!-- 待确认：<我为什么举手> + <需要确认什么> -->`。
 3. **产出 `output/vN/self-review.md`**：把全部锚点汇总成表（位置 / 置信度 / 待确认什么 / 建议），
-   与正文锚点**一一对应**。
+   与正文锚点**一一对应**；若因导图触顶做过合并或放宽配置，**额外记一行报备**。
 4. **改完锚点后，再跑一次机检**：确认第 7 项（锚点数 == 清单行数）仍然 PASS。
 
 锚点与清单**只用于"中/低"置信度**，不许为了显得严谨而滥标。
@@ -194,6 +212,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 12. **前后自相矛盾**（v3）。→ 执行人检自洽项。
 13. **术语跨周不统一 / 首现不规范**（v4）。→ 执行阶段 1.6 与铁律 9。
 14. **自查靠记性、漏检**（v5）。清单越长越依赖记性，人不会逐条勾。→ 执行铁律 10，跑机检脚本。
+15. **复杂章节把导图摊平 / 总结变流水账**（v6）。→ 执行铁律 11，按小节号分组、按书分层；触顶就报备。
 
 ## 禁止清单
 
@@ -214,6 +233,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 - **不许同一概念跨周用不同写法，或术语首现不给中英对照**（v4）
 - **不许跳过阶段 1.6 直接起草**（v4）
 - **不许机检有 FAIL 就导出**（v5）
+- **不许导图触顶后悄悄摊平/合并而不在 `self-review.md` 报备**（v6）
 
 ## 参考文件
 
@@ -225,8 +245,10 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 | `references/review-anchors.md` | 薄弱点标注、置信度分级、`self-review.md` 模板（v3 新增） |
 | `references/glossary.md` | 术语表：统一写法、首现规范、别名（v4 新增，阶段 1.6 必读） |
 | `references/standards.md` | 法律法规与标准清单（v4 接入） |
-| `references/self-check.md` | 自查机制：机检 8 项 + 人检 4 项的分工（v5 新增，阶段 3 必读） |
+| `references/self-check.md` | 自查机制：机检 + 人检的分工（v5 新增，阶段 3 必读） |
+| `references/complex-chapter.md` | 复杂章节：长章节分组、跨资料分层、导图触顶取舍（v6 新增，阶段 2 必读） |
 | `references/weekly-input-template.md` | 每周输入模板 |
+| `report.config.yml` | 导图节点字数/分支数/层数、总结分组阈值（v6 新增，阶段 0/2/3A 读取） |
 | `handmade/homework1.md` | 手工基准版本，一切风格以它为准 |
 | `tools/export.ps1` | 导出脚本 |
-| `tools/check-report.ps1` | 机检脚本（v5 新增，阶段 3A 必跑） |
+| `tools/check-report.ps1` | 机检脚本（v5 新增，v6 起阈值可配，阶段 3A 必跑） |

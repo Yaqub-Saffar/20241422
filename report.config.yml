@@ -1,0 +1,16 @@
+# 预习报告生成配置
+# v6 新增。把原来写死在脚本/SKILL 里的阈值抽出来，复杂章节可放宽。
+# 由 tools/check-report.ps1 -Config 读取；SKILL.md 阶段 2 也按它组织内容。
+#
+# 用法：
+#   powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\vN\generated.md
+#   （不带 -Config 时默认读本文件；找不到则用下列内置默认值）
+
+mindmap:
+  max_node_chars: 12      # 单个节点文案上限（中文按字、连续西文按 1 个词计）
+  max_children: 6         # 每个分支下的直接子节点上限
+  max_depth: 5            # 从根往下的最大层数（root 记为第 0 层）
+
+summary:
+  group_by_section: true  # 重点小节数 >= group_threshold 时，总结按小节号分组
+  group_threshold: 3

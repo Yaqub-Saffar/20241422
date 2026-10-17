@@ -5,7 +5,10 @@
 .DESCRIPTION
     v5 新增。对应 SKILL.md 铁律 10「导出前必过机检」。
     v2~v4 的自查清单靠"人/模型自觉"，清单越长越依赖记性。本脚本把其中
-    「结构性、可判定」的 8 项落成一条命令，作为导出前的硬关卡。
+    「结构性、可判定」的项落成一条命令，作为导出前的硬关卡。
+
+    v6 起阈值不再写死：从 report.config.yml 读取（见 -Config），
+    复杂章节可放宽导图节点字数/子节点数/层数上限。
 
     只写可判定的项；语义类判断（并列项是否打包、经验总结是否下到根因）
     仍由人工完成，脚本不越权。
@@ -19,8 +22,15 @@
 .PARAMETER Week
     期望的周次（阿拉伯或汉字均可）。省略时不校验具体周次，只校验格式。
 
+.PARAMETER Config
+    report.config.yml 路径。省略时默认取脚本上一级目录的 report.config.yml；
+    该文件不存在则用内置默认值（节点 ≤12 字、每分支 ≤6 子节点、层数 ≤5）。
+
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v5\generated.md
+    powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v6\generated.md -Week 7
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v6\generated.md -Config report.config.yml
 
 .NOTES
     退出码：0 = 全部 PASS；1 = 存在 FAIL。
@@ -29,10 +39,36 @@
 param(
     [Parameter(Mandatory = $true)][string]$Report,
     [string]$SelfReview,
-    [string]$Week = ''
+    [string]$Week = '',
+    [string]$Config = ''
 )
 
 $ErrorActionPreference = 'Stop'
+
+# ---- 读取配置（v6）：阈值可配，不再写死 ----
+$maxNodeChars = 12
+$maxChildren = 6
+$maxDepth = 5
+$cfgGroupBySection = $true
+$cfgGroupThreshold = 3
+if (-not $Config) { $Config = Join-Path (Split-Path -Parent $PSScriptRoot) 'report.config.yml' }
+$cfgUsed = '内置默认'
+if (Test-Path -LiteralPath $Config) {
+    $cfgUsed = (Resolve-Path -LiteralPath $Config).Path
+    foreach ($line in (Get-Content -LiteralPath $Config -Encoding UTF8)) {
+        $l = ($line -replace '#.*$', '').Trim()
+        if ($l -eq '' -or $l -notmatch ':') { continue }
+        $k = ($l -split ':', 2)[0].Trim()
+        $v = ($l -split ':', 2)[1].Trim()
+        switch ($k) {
+            'max_node_chars' { [int]::TryParse($v, [ref]$maxNodeChars) | Out-Null }
+            'max_children' { [int]::TryParse($v, [ref]$maxChildren) | Out-Null }
+            'max_depth' { [int]::TryParse($v, [ref]$maxDepth) | Out-Null }
+            'group_by_section' { $cfgGroupBySection = ($v -match 'true') }
+            'group_threshold' { [int]::TryParse($v, [ref]$cfgGroupThreshold) | Out-Null }
+        }
+    }
+}
 
 if (-not (Test-Path -LiteralPath $Report)) { throw "找不到报告文件：$Report" }
 $text = Get-Content -LiteralPath $Report -Raw -Encoding UTF8
@@ -90,7 +126,7 @@ $rootOk = [regex]::IsMatch($text, $reRoot)
 $rootDetail = if ($rootOk) { '匹配' } else { '未找到形如 root((密码系统设计第N周)) 的根节点' }
 Add-Result 3 '思维导图根节点格式' $rootOk $rootDetail
 
-# ---- [4] 导图节点文案 <= 12 字（中文按字、连续西文按 1 个词计） ----
+# ---- [4] 导图节点文案 <= max_node_chars（中文按字、连续西文按 1 个词计） ----
 function Get-NodeWeight([string]$s) {
     $s = $s.Trim()
     if ($s -match '^root\(') { return $null }
@@ -112,11 +148,11 @@ if ($mm.Success) {
         $t = $line.Trim()
         if ($t -eq '' -or $t -eq 'mindmap') { continue }
         $w = Get-NodeWeight $t
-        if ($null -ne $w -and $w -gt 12) { $overNodes.Add("$t ($w)") }
+        if ($null -ne $w -and $w -gt $maxNodeChars) { $overNodes.Add("$t ($w)") }
     }
-    Add-Result 4 '导图节点文案 <= 12 字' ($overNodes.Count -eq 0) $(if ($overNodes.Count -eq 0) { '全部达标' } else { '超长：' + ($overNodes -join '、') })
+    Add-Result 4 "导图节点文案 <= $maxNodeChars 字" ($overNodes.Count -eq 0) $(if ($overNodes.Count -eq 0) { '全部达标（上限来自配置）' } else { '超长：' + ($overNodes -join '、') })
 } else {
-    Add-Result 4 '导图节点文案 <= 12 字' $false '未找到 mermaid 代码块'
+    Add-Result 4 "导图节点文案 <= $maxNodeChars 字" $false '未找到 mermaid 代码块'
 }
 
 # ---- [5] 无空话黑名单 ----
@@ -153,9 +189,42 @@ $required = @('我的补充', '经验总结', '出现环境', '解决过程')
 $missReq = @($required | Where-Object { -not $text.Contains($_) })
 Add-Result 8 '必备标题存在' ($missReq.Count -eq 0) $(if ($missReq.Count -eq 0) { '全部存在' } else { '缺失：' + ($missReq -join '、') })
 
+# ---- [9] 导图分支节点数与层数在上限内（v6：阈值来自配置） ----
+if ($mm.Success) {
+    $stack = @{}          # level -> node名称
+    $childCount = @{}     # node名称 -> 直接子节点数
+    $maxLevelSeen = 0
+    foreach ($line in ($mm.Groups[1].Value -split "`n")) {
+        if ($line.Trim() -eq '' -or $line.Trim() -eq 'mindmap') { continue }
+        $indent = $line.Length - $line.TrimStart().Length
+        $node = $line.Trim()
+        $level = [Math]::Floor($indent / 4)
+        if ($node -match '^root\(') { $level = 0 }
+        if ($level -gt $maxLevelSeen) { $maxLevelSeen = $level }
+        if ($node -notmatch '^root\(') {
+            $parent = $stack[$level - 1]
+            if ($null -ne $parent) {
+                if (-not $childCount.ContainsKey($parent)) { $childCount[$parent] = 0 }
+                $childCount[$parent]++
+            }
+        }
+        $stack[$level] = $node
+    }
+    $overChild = @($childCount.Keys | Where-Object { $childCount[$_] -gt $maxChildren } | ForEach-Object { "$_($($childCount[$_]))" })
+    $depthOk = ($maxLevelSeen -le $maxDepth)
+    $childOk = ($overChild.Count -eq 0)
+    $ok9 = $depthOk -and $childOk
+    $d9 = "最大层数 $maxLevelSeen/$maxDepth"
+    if (-not $childOk) { $d9 += '；分支超限：' + ($overChild -join '、') + "（上限 $maxChildren）" }
+    Add-Result 9 '导图分支数/层数在上限内' $ok9 $d9
+} else {
+    Add-Result 9 '导图分支数/层数在上限内' $false '未找到 mermaid 代码块'
+}
+
 # ---- 输出 ----
 Write-Host ''
 Write-Host "check-report  报告：$Report" -ForegroundColor Cyan
+Write-Host "  配置：$cfgUsed  (节点<=$maxNodeChars 字 / 每分支<=$maxChildren 子节点 / 层数<=$maxDepth)" -ForegroundColor DarkCyan
 Write-Host '------------------------------------------------------------'
 $pass = 0
 foreach ($r in $results) {
