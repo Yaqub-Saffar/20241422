@@ -2,9 +2,9 @@
 name: preview-report
 description: 生成《密码系统设计》课程的每周预习报告草稿（Markdown），输出学习内容、AI 对学习内容的总结、对 AI 总结的反思与补充、实践问题与解决、参考资料、Mermaid 学习思维导图。当用户说"写第N周预习报告""本周预习作业""密码系统设计预习报告"或要求依据学号命名的周报模板生成文档时使用。不用于课程无关的报告、论文、读书笔记与通用总结。
 metadata:
-  version: "6"
+  version: "7"
   derived-from: handmade/homework1.md
-  improved-from: skill/v5
+  improved-from: skill/v6
 ---
 
 # 密码系统设计 · 预习报告生成
@@ -32,6 +32,8 @@ metadata:
     - v4 反例：14 条自查全靠记性，锚点数与 `self-review.md` 行数是否一致、导图节点是否超长，都要人肉核对。
 11. **复杂章节先分流再写**（v6 新增）。命中「复杂章节」条件（一本书 ≥3 个重点小节 / 一周跨两本书 / 某节并列概念 ≥4 个）时，**必须**按 `references/complex-chapter.md` 组织：长章节总结按小节号分组、导图教材分支按"书名 章"分层。**导图超限时，调 `report.config.yml` 阈值或合并同类节点，并在 `self-review.md` 里报备**，不许悄悄摊平。
     - v5 反例：第9章+第7章内容偏多时，导图「教材」分支一路摊平到 5 个二级节点，读者看不出两本书的分界。
+12. **版本号与配置必须显式、可校验**（v7 新增）。版本号 N 用 `tools/version.ps1` 按「命令行 → front-matter → 推断」的优先级确定，**推断时必须提示**；`report.config.yml` 的非法值/未知键由 `check-report.ps1` **报警并回退默认**，不许静默生效或静默忽略。
+    - v6 反例：`max_node_chars: abc` 被静默解析成 0（所有节点"超长"），拼错的 `max_childern` 被静默忽略。
 
 ## 六阶段流程
 
@@ -39,15 +41,22 @@ metadata:
 
 先检查仓库里是否已有 `input/weekNN.md`：有就直接读，**不要重复提问**。没有则按下列清单逐项问用户，拿到答案后写入 `input/weekNN.md`（模板见 `references/weekly-input-template.md`）：
 
-- 本周是第几周？
+- 本周是第几周？（这是**课程周次**，不是 Skill 版本号）
 - 学习内容：书名 + 章节号 + 重点小节 + **每节讲了什么**（这段最关键，只有章节号会让后面全靠编）
 - 老师本周有无额外要求（指定 AI 工具、字数、格式变化等）？默认无
 - 本周实际做了什么？遇到了什么报错？哪怕是"跟着敲代码报了个错"这种小事也要说
 - 提交格式：默认为 `Markdown + PDF`
 
-确定本轮版本号 N：取 `output/` 下已存在的最大版本号 +1；若 `output/` 为空则 N = 1。
+**确定 Skill 版本号 N（v7 起显式解析）**：
 
-读 `report.config.yml`（仓库根目录）：本周的导图节点字数/分支数/层数上限、总结是否按小节号分组，都以它为准；文件不存在就用内置默认。
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\version.ps1 -Input input\weekNN.md
+```
+
+优先级：命令行 `-Version` → 输入 front-matter 的 `report_version:` → 推断 `output\` 最大版本号 +1。
+**若输出提示"推断值"，先与用户确认再继续**；能被显式指定的，不要靠推断。
+
+读 `report.config.yml`（仓库根目录）：本周的导图节点字数/分支数/层数上限、总结是否按小节号分组，都以它为准；文件不存在就用内置默认。**配置写坏了 `check-report.ps1` 会报警**（见阶段 3A）。
 
 ### 阶段 1 · 事实核查
 
@@ -147,7 +156,10 @@ powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v
 全部 PASS 才继续（脚本对 FAIL 项会定位到具体内容）。脚本覆盖 9 项：
 五章标题与顺序 / 无 `⚠️待核实` 残留 / 导图根节点格式 / 导图节点字数 /
 无空话黑名单 / 缩写首现带中英对照 / 锚点数 == `self-review.md` 行数 / 必备标题存在 /
-**导图分支数与层数**（后两项字数、分支数、层数的阈值**读 `report.config.yml`**，可用 `-Config` 指定）。
+**导图分支数与层数**（字数、分支数、层数的阈值**读 `report.config.yml`**，可用 `-Config` 指定）。
+
+**v7 起会做配置校验**：非法值回退默认并打印 `[配置警告]`，未知键报警——
+先看有没有配置警告，再看报告本身。
 
 > ⚠️ 脚本是 `.ps1`，**PowerShell 5.1 要求带 UTF-8 BOM**，否则中文会被当 GBK 解析报错。
 > 改动脚本后确认首三字节是 `EF BB BF`。
@@ -191,6 +203,12 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 
 产出 `output/vN/generated.pdf`，思维导图 PNG 落在 `assets/`。DOCX 默认不生成。
 
+人工定稿 `output/vN/human-edited.md` 后，可再跑一次机检（第 7 项改为**断言锚点已全部解除**）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\vN\human-edited.md -Week N -Final
+```
+
 导出后**必须提醒用户**：
 1. 草稿不能直接交，需人工逐句审阅，另存为 `output/vN/human-edited.md`，并在每处改动旁用 `[[修改原因]]` 标注。这些批注是评分的硬性证据。
 2. **优先看 `output/vN/self-review.md` 的待确认项**——锚点已把"我没把握的地方"挑出来了。
@@ -213,6 +231,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 13. **术语跨周不统一 / 首现不规范**（v4）。→ 执行阶段 1.6 与铁律 9。
 14. **自查靠记性、漏检**（v5）。清单越长越依赖记性，人不会逐条勾。→ 执行铁律 10，跑机检脚本。
 15. **复杂章节把导图摊平 / 总结变流水账**（v6）。→ 执行铁律 11，按小节号分组、按书分层；触顶就报备。
+16. **版本号靠推断 / 配置写坏不报错**（v7）。→ 执行铁律 12，用 `version.ps1` 显式定版，看配置警告。
 
 ## 禁止清单
 
@@ -234,6 +253,7 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 - **不许跳过阶段 1.6 直接起草**（v4）
 - **不许机检有 FAIL 就导出**（v5）
 - **不许导图触顶后悄悄摊平/合并而不在 `self-review.md` 报备**（v6）
+- **不许靠推断 `output\` 目录定版本号，或无视配置警告继续导出**（v7）
 
 ## 参考文件
 
@@ -247,8 +267,10 @@ powershell -ExecutionPolicy Bypass -File tools\export.ps1 -Report output\vN\gene
 | `references/standards.md` | 法律法规与标准清单（v4 接入） |
 | `references/self-check.md` | 自查机制：机检 + 人检的分工（v5 新增，阶段 3 必读） |
 | `references/complex-chapter.md` | 复杂章节：长章节分组、跨资料分层、导图触顶取舍（v6 新增，阶段 2 必读） |
+| `references/stability.md` | 泛化与稳定性：版本号显式、配置校验（v7 新增，阶段 0/3A 必读） |
 | `references/weekly-input-template.md` | 每周输入模板 |
 | `report.config.yml` | 导图节点字数/分支数/层数、总结分组阈值（v6 新增，阶段 0/2/3A 读取） |
 | `handmade/homework1.md` | 手工基准版本，一切风格以它为准 |
 | `tools/export.ps1` | 导出脚本 |
-| `tools/check-report.ps1` | 机检脚本（v5 新增，v6 起阈值可配，阶段 3A 必跑） |
+| `tools/check-report.ps1` | 机检脚本（v5 新增，v6 阈值可配，v7 配置校验 + `-Final` 终稿模式，阶段 3A 必跑） |
+| `tools/version.ps1` | 版本号解析（v7 新增，阶段 0 调用） |

@@ -26,6 +26,10 @@
     report.config.yml 路径。省略时默认取脚本上一级目录的 report.config.yml；
     该文件不存在则用内置默认值（节点 ≤12 字、每分支 ≤6 子节点、层数 ≤5）。
 
+.PARAMETER Final
+    v7 新增。检查"定稿"（human-edited.md）时使用：此时人工已解除全部待确认锚点，
+    第 7 项改为断言正文锚点数为 0，不再与 self-review.md 比对行数。
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\check-report.ps1 -Report output\v6\generated.md -Week 7
 
@@ -40,19 +44,22 @@ param(
     [Parameter(Mandatory = $true)][string]$Report,
     [string]$SelfReview,
     [string]$Week = '',
-    [string]$Config = ''
+    [string]$Config = '',
+    [switch]$Final
 )
 
 $ErrorActionPreference = 'Stop'
 
-# ---- 读取配置（v6）：阈值可配，不再写死 ----
+# ---- 读取配置（v6 新增阈值可配；v7 增加校验：非法值回退默认、未知键报警） ----
 $maxNodeChars = 12
 $maxChildren = 6
 $maxDepth = 5
 $cfgGroupBySection = $true
 $cfgGroupThreshold = 3
+$cfgWarnings = New-Object System.Collections.Generic.List[string]
 if (-not $Config) { $Config = Join-Path (Split-Path -Parent $PSScriptRoot) 'report.config.yml' }
 $cfgUsed = '内置默认'
+$knownKeys = @('max_node_chars', 'max_children', 'max_depth', 'group_by_section', 'group_threshold')
 if (Test-Path -LiteralPath $Config) {
     $cfgUsed = (Resolve-Path -LiteralPath $Config).Path
     foreach ($line in (Get-Content -LiteralPath $Config -Encoding UTF8)) {
@@ -60,12 +67,30 @@ if (Test-Path -LiteralPath $Config) {
         if ($l -eq '' -or $l -notmatch ':') { continue }
         $k = ($l -split ':', 2)[0].Trim()
         $v = ($l -split ':', 2)[1].Trim()
+        if ($v -eq '') { continue }   # 段标题（如 mindmap:），不是键值对
+        if ($knownKeys -notcontains $k) {
+            $cfgWarnings.Add("未知配置键 '$k'（可能拼写错误），已忽略")
+            continue
+        }
+        if ($k -eq 'group_by_section') {
+            if ($v -match '^(true|false)$') { $cfgGroupBySection = ($v -eq 'true') }
+            else { $cfgWarnings.Add("键 group_by_section 的值 '$v' 不是 true/false，已回退默认 true") }
+            continue
+        }
+        $tmp = 0
+        if (-not [int]::TryParse($v, [ref]$tmp)) {
+            $cfgWarnings.Add("键 $k 的值 '$v' 不是整数，已回退默认")
+            continue
+        }
+        if ($tmp -le 0) {
+            $cfgWarnings.Add("键 $k 的值 $tmp 不是正数，已回退默认")
+            continue
+        }
         switch ($k) {
-            'max_node_chars' { [int]::TryParse($v, [ref]$maxNodeChars) | Out-Null }
-            'max_children' { [int]::TryParse($v, [ref]$maxChildren) | Out-Null }
-            'max_depth' { [int]::TryParse($v, [ref]$maxDepth) | Out-Null }
-            'group_by_section' { $cfgGroupBySection = ($v -match 'true') }
-            'group_threshold' { [int]::TryParse($v, [ref]$cfgGroupThreshold) | Out-Null }
+            'max_node_chars' { $maxNodeChars = $tmp }
+            'max_children' { $maxChildren = $tmp }
+            'max_depth' { $maxDepth = $tmp }
+            'group_threshold' { $cfgGroupThreshold = $tmp }
         }
     }
 }
@@ -173,9 +198,11 @@ foreach ($abbr in $watch) {
 }
 Add-Result 6 '缩写首现带中英对照（近似）' ($badAbbr.Count -eq 0) $(if ($badAbbr.Count -eq 0) { '全部命中括号' } else { '首现未见括号：' + ($badAbbr -join '、') })
 
-# ---- [7] 待确认锚点数 == self-review 表行数 ----
+# ---- [7] 待确认锚点数 == self-review 表行数（-Final：终稿应已解除全部锚点） ----
 $anchorCount = ([regex]::Matches($text, '<!--\s*待确认')).Count
-if ($srExists) {
+if ($Final) {
+    Add-Result 7 '终稿已解除全部锚点' ($anchorCount -eq 0) "终稿残留锚点 $anchorCount 处（应为 0）"
+} elseif ($srExists) {
     $srText = Get-Content -LiteralPath $SelfReview -Raw -Encoding UTF8
     $rowCount = ([regex]::Matches($srText, '(?m)^\|\s*[0-9]+\s*\|')).Count
     $anchorOk = ($anchorCount -eq $rowCount)
@@ -225,6 +252,9 @@ if ($mm.Success) {
 Write-Host ''
 Write-Host "check-report  报告：$Report" -ForegroundColor Cyan
 Write-Host "  配置：$cfgUsed  (节点<=$maxNodeChars 字 / 每分支<=$maxChildren 子节点 / 层数<=$maxDepth)" -ForegroundColor DarkCyan
+if ($cfgWarnings.Count -gt 0) {
+    foreach ($w in $cfgWarnings) { Write-Host "  [配置警告] $w" -ForegroundColor Yellow }
+}
 Write-Host '------------------------------------------------------------'
 $pass = 0
 foreach ($r in $results) {
